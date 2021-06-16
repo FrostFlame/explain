@@ -1,0 +1,90 @@
+{% extends 'explain/base/base_page.html' %}
+{% block content %}
+    <br>
+{#    {% for file in graphs.0 %}#}
+{#            <div class="col-sm-8">#}
+{#                <label>PDP </label>#}
+{#                <img class="img-fluid" src="/{{ file }}">#}
+{#                <br>#}
+{#            </div>#}
+{#    {% endfor %}#}
+
+{#    <div class="col-sm-8">#}
+{#        <label>Дерево решений </label>#}
+{#        <img class="img-fluid" src="/{{ graphs.1 }}">#}
+{#        <p><a href="{{ tree_model.0 }}">Апроксимированная модель дерева решений</a></p>#}
+{#        <br>#}
+{#    </div>#}
+
+    <div class="container" style="margin-top: 178px">
+
+        <!-- Nav tabs -->
+        <ul class="nav nav-tabs">
+            <li class="nav-item">
+              <a class="nav-link active" data-toggle="tab" href="#features">Параметры модели</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" data-toggle="tab" href="#pdp">Графики частичной зависимости</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" data-toggle="tab" href="#ice">Индивидуальные условные ожидания</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" data-toggle="tab" href="#dtree">Дерево принятия решений</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" data-toggle="tab" href="#circle">RadViz</a>
+            </li>
+        </ul>
+
+        <!-- Tab panes -->
+        <div class="tab-content">
+        <div class="tab-pane container fade" id="features">
+            <div class="col-sm-8">
+                <label>Параметры </label>
+                <p>Модель придаёт значение параметрам в следующем порядке:</p>
+                {% for feature in features %}
+                    {{ feature }}
+                {% endfor %}
+                <br>
+            </div>
+        </div>
+        <div class="tab-pane container active" id="pdp">
+            {% for file in graphs.pdps %}
+                <div class="col-sm-8">
+                    <img class="img-fluid" src="/{{ file }}">
+                    <br>
+                </div>
+            {% endfor %}
+        </div>
+        <div class="tab-pane container fade" id="ice">
+            {% for file in graphs.ices %}
+                <div class="col-sm-8">
+                    <img class="img-fluid" src="/{{ file }}">
+                    <br>
+                </div>
+            {% endfor %}
+        </div>
+        <div class="tab-pane container fade" id="dtree">
+            <div class="col-sm-8">
+                <label>График </label>
+                <img class="img-fluid" src="/{{ graphs.dtree }}">
+                <p><a href="{{ tree_model }}">Апроксимированная модель дерева решений</a></p>
+                <br>
+            </div>
+        </div>
+        <div class="tab-pane container fade" id="circle">
+            <div class="col-sm-8">
+                <label>График </label>
+                <img class="img-fluid" src="/{{ graphs.circle }}">
+                <br>
+            </div>
+        </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block script %}
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mojs/core"></script>
+{% endblock %}

@@ -1,0 +1,135 @@
+body {
+    background: #E3E4FA;
+}
+
+.form-control:focus {
+    border-color: #E3E4FA;
+    box-shadow: inset 0 2px 2px rgba(0, 0, 0, 0.33), 0 0 8px rgba(0, 0, 0, 0.6);
+}
+
+#navbarmenu .horizontal {
+    display: inline;
+    border-left: 2px solid;
+    padding-left: 0.3em;
+    height: 45px;
+}
+
+#navbarmenu .first {
+    border-left: none;
+    padding-left: 0;
+}
+
+.container {
+    margin-top: 212px;
+    background: snow;
+}
+
+#navbarmenu {
+    font-size: 25px;
+}
+
+.favorites {
+    color: rgba(255, 0, 0, 0.5);
+    font-size: 40px;
+}
+
+.favorites:hover {
+    color: #ff0000;
+}
+
+.favoritesadded {
+    color: #ff0000;
+    font-size: 40px;
+}
+
+.favoritesadded:hover {
+    color: rgba(255, 0, 0, 0.5);
+}
+
+.jumbotron {
+    padding: 0.5rem 0.7rem;
+}
+
+.regfield {
+    margin-bottom: 20px;
+    margin-top: 20px;
+}
+
+.myerrors {
+    color: red;
+}
+
+.reghint {
+    font-style: italic;
+    margin-bottom: 10px;
+    margin-top: 10px;
+    font-size: 12px;
+}
+
+.reghint > ul {
+    padding-inline-start: 20px;
+    margin-bottom: 5px;
+}
+
+.myerrors > ul {
+    list-style-type: none;
+}
+
+img.profile_thumbnail {
+    display: block;
+    max-width: 140px;
+    height: 140px;
+}
+
+.error-text {
+    color: red;
+}
+
+.custom-file-upload {
+    width: 0.1px;
+    height: 0.1px;
+    opacity: 0;
+    overflow: hidden;
+    position: absolute;
+    z-index: -1;
+}
+
+.custom-file-upload-btn {
+    cursor: pointer;
+}
+
+.div-info {
+    margin-bottom: 15px;
+    padding: 4px 12px;
+    background-color: #e7f3fe;
+    border-left: 6px solid #2196F3;
+}
+
+.div-error {
+    margin-bottom: 15px;
+    padding: 4px 12px;
+    background-color: #fecfb7;
+    border-left: 6px solid #f34d55;
+}
+
+.user-rating {
+    margin-top: 15px;
+    background-color: gray;
+    padding: 5px;
+    color: white;
+    border: 1px;
+    border-radius: .25rem;
+}
+
+.truncate {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.img-error-center {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    width: 50%;
+}

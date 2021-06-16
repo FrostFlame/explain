@@ -1,0 +1,35 @@
+{% extends 'explain/base/base_page.html' %}
+{#{% block title %}#}
+{#    {% if popular_for_week %}#}
+{#        Популярное за неделю#}
+{#    {% elif favorites_page %}#}
+{#        Избранное#}
+{#    {% else %}#}
+{#        Результаты поиска#}
+{#    {% endif %}#}
+{#{% endblock %}#}
+{#{% load custom_tags %}#}
+{% block content %}
+    <br>
+    <form action="" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <table>
+            {{ form.as_table }}
+        </table>
+        <br>
+{#        <button type="submit">Submit</button>#}
+        <input type="submit" value="Submit">
+{#        <div class="input-group col-md-12">#}
+{#            <input name="q" class="form-control form-control-lg" type="search" placeholder="Модель"#}
+{#                   aria-label="Search">#}
+{#            <div class="input-group-append">#}
+{#                <button class="btn btn-dark" type="submit"><i class="fa fa-search"></i></button>#}
+{#            </div>#}
+{#        </div>#}
+    </form>
+{% endblock %}
+
+{% block script %}
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mojs/core"></script>
+{% endblock %}
