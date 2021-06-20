@@ -4,25 +4,27 @@ import random
 import string
 from itertools import islice
 
+import graphviz
 import shap as shap
 from django import forms
+from django.core.files import File
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
+from dtreeviz.trees import dtreeviz
 
 # Create your views here.
 import numpy as np
 from joblib import load, dump
-from sklearn import tree
+from sklearn import tree, preprocessing
 from sklearn.inspection import plot_partial_dependence, permutation_importance
 from matplotlib import pyplot as plt
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import cross_val_score
 from sklearn.naive_bayes import GaussianNB
 from sklearn.tree import DecisionTreeClassifier
-from yellowbrick.datasets import load_occupancy
-from yellowbrick.features.radviz import radviz
+from yellowbrick.features.radviz import radviz, RadViz
 
-from explaining.forms import UploadFileForm
+from explaining.forms import UploadFileForm, PredictForm
 
 
 def main_page(request):
@@ -34,48 +36,70 @@ def main_page(request):
             with request.FILES['data'].open() as f:
                 feature_names = f.readline().decode('utf-8').strip().split(' ')
                 for line in islice(f, 1, None):
-                    param1, param2, param3, param4, param5, course = line.decode().split(' ')
+                    param1, param2, param3, param4, param5, course = line.decode().strip().split(' ')
                     points.append((int(param1), int(param2), int(param3), int(param4), int(param5)))
-                    y.append(int(course))
+                    y.append(course)
             X = np.array(points)
-            y = np.array(y)
-            graphs, tree_model, important_features = handle_uploaded_file(request.FILES['model'], X, y, feature_names)
-            return render(request, 'explaining/graphs.html', {'graphs': graphs, 'tree_model': tree_model, 'features': important_features})
+            class_names = np.unique(y)
+            le = preprocessing.LabelEncoder()
+            y = le.fit_transform(y)
+            graphs, models, important_features, equations = handle_uploaded_file(request.FILES['model'], X, y, feature_names, class_names, le)
+            predict_form = PredictForm(features=feature_names)
+            data = File(request.FILES['data'])
+            data.save('data/%s' % data.name)
+            model = File(request.FILES['model'])
+            model.save('models/%s' % model.name)
+            request.session['data'] = data.name
+            request.session['model'] = model.name
+            return render(request, 'explaining/graphs.html', {'graphs': graphs, 'models': models, 'features': important_features, 'equations': equations, 'predict_form': predict_form})
     else:
         form = UploadFileForm()
         return render(request, 'explaining/main_page.html', {'form': form})
 
 
-def handle_uploaded_file(f, X, y, feature_names):
+def predict(request):
+    x = 9
+
+
+def handle_uploaded_file(f, X, y, feature_names, class_names, le):
     model = load(f)
     graphs = {}
+    models = {}
 
     important_features = feature_importance(model, X, y, feature_names)
 
-    graphs['pdps'] = pdp(model, X)
+    most_important = list(important_features.keys())[0:2]
+    most_important = dict(zip(most_important, [feature_names.index(a) for a in most_important]))
+
+    graphs['pdps'] = pdp(model, X, feature_names, class_names, most_important)
     # graphs['pdps'] = []
-    # bayes(model, X)
-    graphs['ices'] = ice(model, X)
+    graphs['ices'] = pdp(model, X, feature_names, class_names, most_important, True)
     # graphs['ices'] = []
-    tree_graph, tree_model = dtree(model, X)
+    tree_graph, tree_model = dtree(model, X, feature_names)
     # tree_graph, tree_model = None, None
     graphs['dtree'] = tree_graph
+    models['dtree'] = tree_model
 
     graphs['circle'] = circle(X, y, feature_names)
 
-    # logistic_regression(model, X)
+    reg_graph, equations, reg_model = logistic_regression(model, X, most_important, le)
 
-    # graphs.append(log_graph)
+    graphs['regression'] = reg_graph
+    models['regression'] = reg_model
 
-
-    return graphs, tree_model, important_features
+    return graphs, models, important_features, equations
 
 
 def circle(X, y, feature_names):
+    plt.figure()
     path = 'media/circle/'
-    fig = radviz(X, y, classes=['Предмет 1', 'Предмет 2', 'Предмет 3', 'Предмет 4', 'Предмет 5'], features=feature_names)
+    visualizer = RadViz(classes=['Предмет 1', 'Предмет 2', 'Предмет 3', 'Предмет 4', 'Предмет 5'], features=feature_names)
+
+    visualizer.fit(X, y)
+    visualizer.transform(X)
     filename = path + get_random_string() + '.jpg'
-    plt.savefig(filename)
+    visualizer.show(filename)
+    plt.close()
     return filename
 
 
@@ -84,166 +108,115 @@ def feature_importance(model, X, y, feature_names):
 
     features = dict(zip(feature_names, r.importances_mean))
     features = dict(sorted(features.items(), key=lambda item: item[1], reverse=True))
-    # for i in r.importances_mean.argsort()[::-1]:
-    #     if r.importances_mean[i] - 2 * r.importances_std[i] > 0:
-    #         features[feature_names[i]] = [r.importances_mean[i], r.importances_std[i]]
     return features
 
 
-def pdp(model, X):
+def pdp(model, X, feature_names, class_names, features, individual=False):
 
-    features = [1]
     graphs = []
     path = 'media/pdp/'
-    fig1 = plot_partial_dependence(model, X, features, kind='average', target=1)
-    filename = path + get_random_string() + '.jpg'
-    graphs.append(filename)
-    plt.savefig(filename)
-    # plt.show()
-    fig2 = plot_partial_dependence(model, X, features, kind='average', target=2)
-    filename = path + get_random_string() + '.jpg'
-    graphs.append(filename)
-    plt.savefig(filename)
-    # plt.show()
-    fig3 = plot_partial_dependence(model, X, features, kind='average', target=3)
-    filename = path + get_random_string() + '.jpg'
-    graphs.append(filename)
-    plt.savefig(filename)
-    # plt.show()
-    fig4 = plot_partial_dependence(model, X, features, kind='average', target=4)
-    filename = path + get_random_string() + '.jpg'
-    graphs.append(filename)
-    plt.savefig(filename)
-    # plt.show()
-    fig5 = plot_partial_dependence(model, X, features, kind='average', target=5)
-    filename = path + get_random_string() + '.jpg'
-    graphs.append(filename)
-    plt.savefig(filename)
-    # plt.show()
-    return graphs
 
+    features = list(features.values())
+    for feature in features:
+        for cl, cln in zip(model.classes_, class_names):
+            fig = plot_partial_dependence(model, X, features=[feature], feature_names=feature_names, kind='individual' if individual else 'average', target=cl)
+            filename = path + get_random_string() + '.jpg'
+            graphs.append((filename, cln))
+            plt.savefig(filename)
+            plt.close()
 
-def ice(model, X):
+    if not individual:
+        for cl, cln in zip(model.classes_, class_names):
+            fig = plot_partial_dependence(model, X, features=[(features[0], features[1])], feature_names=feature_names, kind='average', target=cl)
+            filename = path + get_random_string() + '.jpg'
+            graphs.append((filename, cln))
+            plt.savefig(filename)
+            plt.close()
 
-    features = [1]
-    graphs = []
-    path = 'media/pdp/'
-    fig1 = plot_partial_dependence(model, X, features, kind='individual', target=1)
-    filename = path + get_random_string() + '.jpg'
-    graphs.append(filename)
-    plt.savefig(filename)
-    # plt.show()
-    fig2 = plot_partial_dependence(model, X, features, kind='individual', target=2)
-    filename = path + get_random_string() + '.jpg'
-    graphs.append(filename)
-    plt.savefig(filename)
-    # plt.show()
-    fig3 = plot_partial_dependence(model, X, features, kind='individual', target=3)
-    filename = path + get_random_string() + '.jpg'
-    graphs.append(filename)
-    plt.savefig(filename)
-    # plt.show()
-    fig4 = plot_partial_dependence(model, X, features, kind='individual', target=4)
-    filename = path + get_random_string() + '.jpg'
-    graphs.append(filename)
-    plt.savefig(filename)
-    # plt.show()
-    fig5 = plot_partial_dependence(model, X, features, kind='individual', target=5)
-    filename = path + get_random_string() + '.jpg'
-    graphs.append(filename)
-    plt.savefig(filename)
-    # plt.show()
     return graphs
 
 
 def get_random_string(length=10):
-    # choose from all lowercase letter
     letters = string.ascii_lowercase
     result_str = ''.join(random.choice(letters) for i in range(length))
     return result_str
 
 
-def bayes(model, X):
-
-    y = model.predict(X)
-
-    gnb = GaussianNB()
-    gnb.fit(X, y)
-
-
-def dtree(model, X):
-    clf = DecisionTreeClassifier(random_state=0, max_depth=3)
+def dtree(model, X, feature_names):
+    clf = DecisionTreeClassifier(random_state=0, max_depth=5)
     y = model.predict(X)
     clf.fit(X, y)
     cross_val_score(clf, X, y, cv=10)
 
-    px = 1 / plt.rcParams['figure.dpi']
-    plt.subplots(figsize=(1920 * px, 1080 * px))
-    graph = tree.plot_tree(clf)
-    # plt.show()
     path = 'media/dtree/'
-    filename = path + get_random_string() + '.jpg'
-    plt.savefig(filename)
+    filename = path + get_random_string() + '.svg'
+
+    viz = dtreeviz(clf, X, y,
+                   target_name="target",
+                   feature_names=feature_names,
+                   class_names=['Предмет 1', 'Предмет 2', 'Предмет 3', 'Предмет 4', 'Предмет 5'])
+    viz.save(filename)
+
     model_name = 'media/models/' + get_random_string() + '.joblib'
     dump(clf, model_name)
     return filename, model_name
 
 
-def logistic_regression(model, X):
+def logistic_regression(model, X, features, le):
+
+    plt.figure()
     y = model.predict(X)
+    labels = list(features.keys())
+    features = list(features.values())
 
     q = []
     for elem in X:
-        q.append((elem[0], elem[1]))
-    X =np.array(q)
+        q.append((elem[features[0]], elem[features[1]]))
+    X = np.array(q)
 
-    clf = LogisticRegression(solver='sag', max_iter=100, random_state=42,
-                             multi_class='multinomial').fit(X, y)
+    lr = LogisticRegression(solver='saga', max_iter=100, random_state=42,
+                            multi_class='ovr', penalty='l1')
+    lr.fit(X, y)
 
-    # print the training scores
-    print("training score : %.3f (%s)" % (clf.score(X, y), 'multinomial'))
+    x_min, x_max = X[:, 0].min() - .5, X[:, 0].max() + .5
+    y_min, y_max = X[:, 1].min() - .5, X[:, 1].max() + .5
+    h = 1  # step size in the mesh
+    xx, yy = np.meshgrid(np.arange(x_min, x_max, h), np.arange(y_min, y_max, h))
+    Z = lr.predict(np.c_[xx.ravel(), yy.ravel()])
 
-    # create a mesh to plot in
-    h = .02  # step size in the mesh
-    x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
-    y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
-    xx, yy = np.meshgrid(np.arange(x_min, x_max, h),
-                         np.arange(y_min, y_max, h))
+    # Put the result into a color plot
+    Z = Z.reshape(xx.shape)
+    plt.figure(1, figsize=(4, 3))
+    plt.pcolormesh(xx, yy, Z, cmap=plt.cm.Paired)
 
-    # Plot the decision boundary. For that, we will assign a color to each
-    # point in the mesh [x_min, x_max]x[y_min, y_max].
-    print(clf.intercept_)
-    print(clf.coef_)
-    # # Z = clf.predict(np.c_[xx.ravel(), yy.ravel()])
-    # # # Put the result into a color plot
-    # # Z = Z.reshape(xx.shape)
-    # # plt.figure()
-    # # plt.contourf(xx, yy, Z, cmap=plt.cm.Paired)
-    # # plt.title("Decision surface of LogisticRegression (%s)" % 'multinomial')
-    # # plt.axis('tight')
-    # #
-    # # # Plot also the training points
-    # # colors = "bry"
-    # # for i, color in zip(clf.classes_, colors):
-    # #     idx = np.where(y == i)
-    # #     plt.scatter(X[idx, 0], X[idx, 1], c=color, cmap=plt.cm.Paired,
-    # #                 edgecolor='black', s=20)
-    # #
-    # # # Plot the three one-against-all classifiers
-    # # xmin, xmax = plt.xlim()
-    # # ymin, ymax = plt.ylim()
-    # # coef = clf.coef_
-    # # intercept = clf.intercept_
-    #
-    # def plot_hyperplane(c, color):
-    #     def line(x0):
-    #         return (-(x0 * coef[c, 0]) - intercept[c]) / coef[c, 1]
-    #
-    #     plt.plot([xmin, xmax], [line(xmin), line(xmax)],
-    #              ls="--", color=color)
-    #
-    # for i, color in zip(clf.classes_, colors):
-    #     plot_hyperplane(i, color)
+    # Plot also the training points
+    plt.scatter(X[:, 0], X[:, 1], c=y, edgecolors='k', cmap=plt.cm.Paired)
+
+    plt.xlabel(labels[0])
+    plt.ylabel(labels[1])
+
+    plt.xlim(xx.min(), xx.max())
+    plt.ylim(yy.min(), yy.max())
+    plt.xticks(())
+    plt.yticks(())
+
     # plt.show()
+    path = 'media/regr/'
+    filename = path + get_random_string() + '.jpg'
+    plt.savefig(filename)
+
+    coefs = lr.coef_
+    bias = lr.intercept_
+    equations = []
+    classes = le.inverse_transform(lr.classes_)
+    for b, c, cl in zip(bias, coefs, classes):
+        eq = 'Вероятность отношения к классу %s равна 1/(1+exp(-(%f+(%f*%s)+(%f*%s))))' % (cl, b, c[0], labels[0], c[1], labels[1])
+        equations.append(eq)
+
+    model_name = 'media/models/' + get_random_string() + '.joblib'
+    dump(lr, model_name)
+
+    return filename, equations, model_name
+
 
 

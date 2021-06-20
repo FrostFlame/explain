@@ -1,20 +1,6 @@
 {% extends 'explain/base/base_page.html' %}
 {% block content %}
     <br>
-{#    {% for file in graphs.0 %}#}
-{#            <div class="col-sm-8">#}
-{#                <label>PDP </label>#}
-{#                <img class="img-fluid" src="/{{ file }}">#}
-{#                <br>#}
-{#            </div>#}
-{#    {% endfor %}#}
-
-{#    <div class="col-sm-8">#}
-{#        <label>Дерево решений </label>#}
-{#        <img class="img-fluid" src="/{{ graphs.1 }}">#}
-{#        <p><a href="{{ tree_model.0 }}">Апроксимированная модель дерева решений</a></p>#}
-{#        <br>#}
-{#    </div>#}
 
     <div class="container" style="margin-top: 178px">
 
@@ -35,50 +21,80 @@
             <li class="nav-item">
               <a class="nav-link" data-toggle="tab" href="#circle">RadViz</a>
             </li>
+            <li class="nav-item">
+              <a class="nav-link" data-toggle="tab" href="#regression">Логистическая регрессия</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" data-toggle="tab" href="#prediction">Предсказание</a>
+            </li>
         </ul>
 
         <!-- Tab panes -->
         <div class="tab-content">
-        <div class="tab-pane container fade" id="features">
-            <div class="col-sm-8">
-                <label>Параметры </label>
+        <div class="tab-pane container active" id="features">
+            <div class="col-sm-12">
                 <p>Модель придаёт значение параметрам в следующем порядке:</p>
                 {% for feature in features %}
                     {{ feature }}
+                    <br>
                 {% endfor %}
                 <br>
             </div>
         </div>
-        <div class="tab-pane container active" id="pdp">
-            {% for file in graphs.pdps %}
-                <div class="col-sm-8">
-                    <img class="img-fluid" src="/{{ file }}">
+        <div class="tab-pane container fade" id="pdp">
+            {% for pdp in graphs.pdps %}
+                <div class="col-sm-12">
+                    <label>{{ pdp.1 }}</label>
+                    <br>
+                    <img class="img-fluid" src="/{{ pdp.0 }}">
                     <br>
                 </div>
             {% endfor %}
         </div>
         <div class="tab-pane container fade" id="ice">
-            {% for file in graphs.ices %}
-                <div class="col-sm-8">
-                    <img class="img-fluid" src="/{{ file }}">
+            {% for ice in graphs.ices %}
+                <div class="col-sm-12">
+                    <label>{{ ice.1 }}</label>
+                    <br>
+                    <img class="img-fluid" src="/{{ ice.0 }}">
                     <br>
                 </div>
             {% endfor %}
         </div>
         <div class="tab-pane container fade" id="dtree">
-            <div class="col-sm-8">
+            <div class="col-sm-12">
                 <label>График </label>
                 <img class="img-fluid" src="/{{ graphs.dtree }}">
-                <p><a href="{{ tree_model }}">Апроксимированная модель дерева решений</a></p>
+                <p><a href="{{ models.dtree }}">Апроксимированная модель дерева решений</a></p>
                 <br>
             </div>
         </div>
         <div class="tab-pane container fade" id="circle">
-            <div class="col-sm-8">
-                <label>График </label>
+            <div class="col-sm-12">
                 <img class="img-fluid" src="/{{ graphs.circle }}">
                 <br>
             </div>
+        </div>
+        <div class="tab-pane container fade" id="regression">
+            <div class="col-sm-12">
+                <img class="img-fluid" src="/{{ graphs.regression }}">
+                <br>
+                <p><a href="{{ models.regression }}">Апроксимированная модель логистической регрессии</a></p>
+                <br>
+                {% for eq in equations %}
+                    <p>{{ eq }}</p>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="tab-pane container fade" id="prediction">
+            <form action="predict" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <table>
+                    {{ predict_form.as_table }}
+                </table>
+                <br>
+                <input type="submit" value="Отправить">
+            </form>
         </div>
     </div>
   </div>

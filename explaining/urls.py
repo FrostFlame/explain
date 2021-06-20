@@ -5,5 +5,5 @@ app_name = "explaining"
 
 urlpatterns = [
     path(r'', main_page, name="main_page"),
-    # path(r'explanations', explanations, name='explanations')
+    path(r'predict', predict, name='predict')
 ]
