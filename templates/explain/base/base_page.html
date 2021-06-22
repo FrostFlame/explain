@@ -33,47 +33,6 @@
         <img src="{% static 'img/logo1.png' %}" height="180" width="180">
     </a>
 
-    <div class="collapse navbar-collapse flex-column" id="navbarToggler">
-        <div class="ml-auto">
-            <ul class="navbar-nav flex-row">
-                {% if not user.is_authenticated %}
-{#                    <li class="nav-item horizontal first">#}
-{#                        <a class="nav-link" href="/">Определения</a>#}
-{#                    </li>#}
-{#                    <li class="nav-item horizontal">#}
-{#                        <a class="nav-link" href="{% url "website:support" %}">Поддержка</a>#}
-{#                    </li>#}
-{#                    <li class="nav-item horizontal">#}
-{#                        <a class="nav-link" href="{% url 'login' %}">Войти</a>#}
-{#                    </li>#}
-                {% else %}
-{#                    <li class="nav-item horizontal">#}
-{#                        <a class="nav-link" href="{% url "website:support" %}">Поддержка</a>#}
-{#                    </li>#}
-                {% endif %}
-            </ul>
-        </div>
-        <ul class="navbar-nav flex-row mr-auto navbar-fixed col-md-10" style="padding-top: 40px;">
-            <li class="nav-item active col-md-12">
-{#                <form action="{% url 'website:search' %}" method="get" class="form-inline">#}
-{#                    <div class="input-group col-md-12">#}
-{#                        <input name="q" class="form-control form-control-lg" type="search" placeholder="Поиск..."#}
-{#                               aria-label="Search">#}
-{#                        <div class="input-group-append">#}
-{#                            <button class="btn btn-dark" type="submit"><i class="fa fa-search"></i></button>#}
-{#                        </div>#}
-{#                    </div>#}
-{#                </form>#}
-            </li>
-{#            <li class="nav-item col-md-3">#}
-{#                <a id="create_icon" href="{% url "website:create_definition" %}"#}
-{#                   style="color: inherit; font-size: 60px"><i class="fa fa-plus-circle"></i></a>#}
-{#                <a type="button" href="{% url "website:random_definition" %}" class="btn" id="random_word"#}
-{#                   style="border-radius: 30px/30px; height: 50px;font-size:18px; margin-bottom: 30px; margin-left: 15px; color: #ff7a06; background: #1b1b1b;">Случайное#}
-{#                    слово</a>#}
-{#            </li>#}
-        </ul>
-    </div>
 </nav>
 <div class="main">
     <div class="container">

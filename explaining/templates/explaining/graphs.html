@@ -2,7 +2,7 @@
 {% block content %}
     <br>
 
-    <div class="container" style="margin-top: 178px">
+    <div class="container" style="margin-top: 10px">
 
         <!-- Nav tabs -->
         <ul class="nav nav-tabs">
@@ -39,6 +39,9 @@
                     <br>
                 {% endfor %}
                 <br>
+            {% if predictions %}
+                Результат предсказания оригинальной модели: {{ predictions.model.0 }}
+            {% endif %}
             </div>
         </div>
         <div class="tab-pane container fade" id="pdp">
@@ -67,6 +70,9 @@
                 <img class="img-fluid" src="/{{ graphs.dtree }}">
                 <p><a href="{{ models.dtree }}">Апроксимированная модель дерева решений</a></p>
                 <br>
+                {% if predictions %}
+                    Результат предсказания модели объяснимого дерева решений: {{ predictions.dtree.0 }}
+                {% endif %}
             </div>
         </div>
         <div class="tab-pane container fade" id="circle">
@@ -84,6 +90,10 @@
                 {% for eq in equations %}
                     <p>{{ eq }}</p>
                 {% endfor %}
+                <br>
+                {% if predictions %}
+                    Результат предсказания модели логистической регрессии: {{ predictions.regression.0 }}
+                {% endif %}
             </div>
         </div>
         <div class="tab-pane container fade" id="prediction">
